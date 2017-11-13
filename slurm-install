@@ -5,7 +5,7 @@ Install steps
 3:Create Users
 4:Install Munge
 5:Install Slurm
-6:
+6:Test
 
 (Quick installs)
 
@@ -15,7 +15,7 @@ yum install nano gcc epel-release rpmbuild git
 
 
 *********************************************************
-1:Hostnames and Networking
+#1:Hostnames and Networking
 
 (Set hostnames/IP addressing and then bring interfaces up.)
 
@@ -38,7 +38,7 @@ systemctl restart network
 
 hostnamectl status (Display hsotname info)
 
-1.1*******************set ip addresses
+#1.1*******************set ip addresses
 
 cd /etc/sysconfig/network-scripts/
 nano ifcg-eth0 (Or whatever interface is named)
@@ -60,13 +60,13 @@ ifconfig/ ip addr to verify
 
 
 ******************************************************
-2:Install database software (On server)
+#2:Install database software (On server)
 
 
 yum install mariadb mariadb-server mariadb-devel -y
 
 **********************************************************************
-3: Create user groups
+#3: Create user groups
 (Ensure each UID/GID is same across all nodes)
 
 #!/bin/bash
@@ -79,10 +79,10 @@ groupadd -g $SLURMUSER slurm
 useradd  -m -c "Slurm" -d /var/lib/slurm -u $SLURMUSER -g slurm  -s /bin/bash slurm
 
 export SLURMUSER1=993
-useradd  -m -c "User1" -d /home/user1 -u $SLURMUSER1 -g slurm  -s /bin/bash user1
+useradd  -m -c "ser1" -d /home/user1 -u $SLURMUSER1 -g slurm  -s /bin/bash user1
 
 export SLURMUSER2=994
-useradd  -m -c "User2" -d /home/user2 -u $SLURMUSER2 -g slurm  -s /bin/bash user2
+useradd  -m -c "user2" -d /home/user2 -u $SLURMUSER2 -g slurm  -s /bin/bash user2
 
 tail /etc/passwd (Verify users)
 
@@ -113,6 +113,7 @@ chmod 400 /etc/munge/munge.key
 (Copy munge key to all nodes)
 scp /etc/munge/munge.key mradmin@Virt2:/etc/munge (If permission denied simply send to home folder and copy manually from node for now)
 
+**
 (SSH into each node, verfy key is in correct directory and do following:)
 
 chown -R munge: /etc/munge/ /var/log/munge/
@@ -133,7 +134,7 @@ remunge)
 4.5***************************************************
 Database setup
 
-systemctl enable mariadbnano 
+systemctl enable mariadb
 systemctl start mariadb
 
 mysql_sercure_isntallation
@@ -161,16 +162,14 @@ systemctl start ntpd
 
 **Install required packages(All nodes)
 
-yum install perl-devel openssl openssl-devel pam-devel numactl numactl-devel 
-hwloc hwloc-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel 
-man2html libibmad libibumad -y
+yum install perl-devel openssl openssl-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel man2html libibmad libibumad -y
 
 **Download latest Slurm
 wget http://www.schedmd.com/downloads/latest/slurm-17.02.9.tar.bz2
 
 **Build rpms. Ensure all packages have been isntalled prior to attempting build
 
-rpmbuild -ta slurm-17.02.7.tar.bz2
+rpmbuild -ta slurm-17.02.9.tar.bz2
 
 **TRanfer RPM files to nodes
 (Eitehr use SCP or quickly setup NFS on each node)
@@ -192,7 +191,7 @@ scp slurm.conf mradmin@Virt2:/etc/slurm/slurm.conf
 
 Put slurmdbd.conf into /etc/slurm/
 
-
+************************************************************
 **Create directoies for server
 mkdir /var/spool/slurmctld
 chown slurm: /var/spool/slurmctld
@@ -210,7 +209,7 @@ touch /var/log/slurmd.log
 chown slurm: /var/log/slurmd.log
 
 slurmd -C (VErify slurm conf is fine)
-
+*************************************************************
 **Firewall config before starting
 
 (Turn off firewall on nodes/server is having too many issues)
@@ -240,24 +239,21 @@ systemctl status slurmctld.service
 
 
 sinfo
-
+*****************************************
 Accounting/DB
 sacctmgr add cluster virt
 sacctmgr add account root Cluster=virt
 sacctmgr add account testusers Cluster=virt
 sacctmgr add user test1 DefaultAccount=testusers
 sacctmgr add user test2 DefaultAccount=testusers
-
+***************************
 # TEST
 scontrol show nodes
 
 #Test Command
 srun -N2 hostname
 sbatch -N2 batch.sh
-
-
-
-Test
+(Login as test users user1/user2 and run srun)
 
 
 
